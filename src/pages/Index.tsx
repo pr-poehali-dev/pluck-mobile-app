@@ -11,7 +11,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
-type Screen = 'auth' | 'feed' | 'reader' | 'library' | 'library-reader' | 'profile' | 'goals' | 'settings' | 'help' | 'sources';
+type Screen = 'auth' | 'feed' | 'reader' | 'library' | 'library-reader' | 'library-add-choice' | 'library-add-book' | 'library-add-article' | 'profile' | 'goals' | 'settings' | 'help' | 'sources' | 'forgot-password';
 type ReadFormat = 'short' | 'full';
 type UserRole = 'Читатель' | 'Модератор' | 'Разработчик';
 
@@ -166,6 +166,10 @@ const Index = () => {
   const [autoPlay, setAutoPlay] = useState(false);
   const [sources, setSources] = useState<RSSSource[]>(availableSources);
   const [readFormat, setReadFormat] = useState<ReadFormat>('short');
+  const [bookFile, setBookFile] = useState<File | null>(null);
+  const [articleUrl, setArticleUrl] = useState('');
+  const [contentTags, setContentTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
     const path = location.pathname;
@@ -212,6 +216,18 @@ const Index = () => {
       setIsAuthenticated(true);
     } else if (path === '/profile/help') {
       setScreen('help');
+      setIsAuthenticated(true);
+    } else if (path === '/forgot-password') {
+      setScreen('forgot-password');
+      setIsAuthenticated(false);
+    } else if (path === '/library/add') {
+      setScreen('library-add-choice');
+      setIsAuthenticated(true);
+    } else if (path === '/library/add/book') {
+      setScreen('library-add-book');
+      setIsAuthenticated(true);
+    } else if (path === '/library/add/article') {
+      setScreen('library-add-article');
       setIsAuthenticated(true);
     }
   }, [location.pathname, params.id]);
@@ -321,11 +337,67 @@ const Index = () => {
               </Button>
 
               {isLogin && (
-                <button className="w-full text-center text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
+                <button 
+                  onClick={() => navigateTo('/forgot-password')}
+                  className="w-full text-center text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                >
                   Забыли пароль?
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === 'forgot-password') {
+    return (
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-6 fade-in">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigateTo('/login')}
+            className="mb-4"
+          >
+            <Icon name="ArrowLeft" size={24} />
+          </Button>
+
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-2">Восстановление пароля</h1>
+            <p className="text-[var(--text-secondary)]">
+              Введите email для получения ссылки
+            </p>
+          </div>
+
+          <div className="bg-[var(--bg-secondary)] rounded-2xl p-6 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-email">Email</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                placeholder="your@email.com"
+                className="bg-[var(--bg-tertiary)] border-0"
+              />
+            </div>
+
+            <Button
+              onClick={() => {
+                alert('Ссылка для восстановления отправлена на email');
+                navigateTo('/login');
+              }}
+              className="w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90"
+            >
+              Отправить ссылку
+            </Button>
+
+            <button 
+              onClick={() => navigateTo('/login')}
+              className="w-full text-center text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+            >
+              Вернуться к входу
+            </button>
           </div>
         </div>
       </div>
@@ -550,8 +622,13 @@ const Index = () => {
           <div className="sticky top-0 z-10 bg-[var(--bg-primary)] border-b border-[var(--divider)] px-4 py-4">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-2xl font-bold">Моя библиотека</h1>
-              <Button variant="ghost" size="sm">
-                Изменить
+              <Button 
+                onClick={() => navigateTo('/library/add')}
+                size="sm"
+                className="bg-[var(--accent)] hover:bg-[var(--accent)]/90"
+              >
+                <Icon name="Plus" size={16} className="mr-1" />
+                Добавить
               </Button>
             </div>
 
@@ -597,6 +674,261 @@ const Index = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Library Add Choice Screen */}
+      {screen === 'library-add-choice' && (
+        <div className="min-h-screen fade-in">
+          <div className="sticky top-0 z-10 bg-[var(--bg-primary)] border-b border-[var(--divider)] px-4 py-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigateTo('/library')}
+              >
+                <Icon name="ArrowLeft" size={20} />
+              </Button>
+              <h1 className="text-xl font-semibold">Добавить контент</h1>
+            </div>
+          </div>
+
+          <div className="px-4 pt-8 space-y-4">
+            <div
+              onClick={() => navigateTo('/library/add/book')}
+              className="bg-[var(--bg-secondary)] rounded-2xl p-6 hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center">
+                  <Icon name="BookOpen" size={24} className="text-[var(--accent)]" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1">Добавить книгу</h3>
+                  <p className="text-sm text-[var(--text-tertiary)]">
+                    Загрузите PDF, EPUB или другие форматы
+                  </p>
+                </div>
+                <Icon name="ChevronRight" size={20} className="text-[var(--text-tertiary)]" />
+              </div>
+            </div>
+
+            <div
+              onClick={() => navigateTo('/library/add/article')}
+              className="bg-[var(--bg-secondary)] rounded-2xl p-6 hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center">
+                  <Icon name="Link" size={24} className="text-[var(--accent)]" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1">Добавить статью</h3>
+                  <p className="text-sm text-[var(--text-tertiary)]">
+                    Добавьте ссылку на статью из интернета
+                  </p>
+                </div>
+                <Icon name="ChevronRight" size={20} className="text-[var(--text-tertiary)]" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Library Add Book Screen */}
+      {screen === 'library-add-book' && (
+        <div className="min-h-screen fade-in">
+          <div className="sticky top-0 z-10 bg-[var(--bg-primary)] border-b border-[var(--divider)] px-4 py-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigateTo('/library/add')}
+              >
+                <Icon name="ArrowLeft" size={20} />
+              </Button>
+              <h1 className="text-xl font-semibold">Добавить книгу</h1>
+            </div>
+          </div>
+
+          <div className="px-4 pt-6 space-y-6 pb-24">
+            <div className="space-y-2">
+              <Label htmlFor="book-file">Файл книги</Label>
+              <div className="border-2 border-dashed border-[var(--divider)] rounded-xl p-6 text-center hover:border-[var(--accent)] transition-colors cursor-pointer">
+                <input
+                  type="file"
+                  id="book-file"
+                  accept=".pdf,.epub,.mobi,.fb2"
+                  className="hidden"
+                  onChange={(e) => setBookFile(e.target.files?.[0] || null)}
+                />
+                <label htmlFor="book-file" className="cursor-pointer">
+                  <Icon name="Upload" size={32} className="mx-auto mb-2 text-[var(--text-tertiary)]" />
+                  <p className="text-sm font-medium mb-1">
+                    {bookFile ? bookFile.name : 'Нажмите для выбора файла'}
+                  </p>
+                  <p className="text-xs text-[var(--text-tertiary)]">
+                    PDF, EPUB, MOBI, FB2 до 50 МБ
+                  </p>
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Теги</Label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {contentTags.map((tag, index) => (
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="px-3 py-1 cursor-pointer hover:bg-red-500/10"
+                    onClick={() => setContentTags(contentTags.filter((_, i) => i !== index))}
+                  >
+                    {tag} <Icon name="X" size={12} className="ml-1" />
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  placeholder="Добавить тег"
+                  className="bg-[var(--bg-secondary)] border-0"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && newTag.trim()) {
+                      setContentTags([...contentTags, newTag.trim()]);
+                      setNewTag('');
+                    }
+                  }}
+                />
+                <Button
+                  onClick={() => {
+                    if (newTag.trim()) {
+                      setContentTags([...contentTags, newTag.trim()]);
+                      setNewTag('');
+                    }
+                  }}
+                  variant="outline"
+                >
+                  <Icon name="Plus" size={16} />
+                </Button>
+              </div>
+              <p className="text-xs text-[var(--text-tertiary)]">
+                Например: фантастика, детектив, бизнес
+              </p>
+            </div>
+
+            <Button
+              onClick={() => {
+                if (bookFile) {
+                  alert('Книга добавлена в библиотеку!');
+                  setBookFile(null);
+                  setContentTags([]);
+                  navigateTo('/library');
+                } else {
+                  alert('Пожалуйста, выберите файл');
+                }
+              }}
+              className="w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90"
+              disabled={!bookFile}
+            >
+              Добавить книгу
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Library Add Article Screen */}
+      {screen === 'library-add-article' && (
+        <div className="min-h-screen fade-in">
+          <div className="sticky top-0 z-10 bg-[var(--bg-primary)] border-b border-[var(--divider)] px-4 py-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigateTo('/library/add')}
+              >
+                <Icon name="ArrowLeft" size={20} />
+              </Button>
+              <h1 className="text-xl font-semibold">Добавить статью</h1>
+            </div>
+          </div>
+
+          <div className="px-4 pt-6 space-y-6 pb-24">
+            <div className="space-y-2">
+              <Label htmlFor="article-url">Ссылка на статью</Label>
+              <Input
+                id="article-url"
+                type="url"
+                value={articleUrl}
+                onChange={(e) => setArticleUrl(e.target.value)}
+                placeholder="https://example.com/article"
+                className="bg-[var(--bg-secondary)] border-0"
+              />
+              <p className="text-xs text-[var(--text-tertiary)]">
+                Вставьте полную ссылку на статью
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Теги</Label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {contentTags.map((tag, index) => (
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="px-3 py-1 cursor-pointer hover:bg-red-500/10"
+                    onClick={() => setContentTags(contentTags.filter((_, i) => i !== index))}
+                  >
+                    {tag} <Icon name="X" size={12} className="ml-1" />
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  placeholder="Добавить тег"
+                  className="bg-[var(--bg-secondary)] border-0"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && newTag.trim()) {
+                      setContentTags([...contentTags, newTag.trim()]);
+                      setNewTag('');
+                    }
+                  }}
+                />
+                <Button
+                  onClick={() => {
+                    if (newTag.trim()) {
+                      setContentTags([...contentTags, newTag.trim()]);
+                      setNewTag('');
+                    }
+                  }}
+                  variant="outline"
+                >
+                  <Icon name="Plus" size={16} />
+                </Button>
+              </div>
+              <p className="text-xs text-[var(--text-tertiary)]">
+                Например: технологии, маркетинг, наука
+              </p>
+            </div>
+
+            <Button
+              onClick={() => {
+                if (articleUrl.trim()) {
+                  alert('Статья добавлена в библиотеку!');
+                  setArticleUrl('');
+                  setContentTags([]);
+                  navigateTo('/library');
+                } else {
+                  alert('Пожалуйста, введите ссылку на статью');
+                }
+              }}
+              className="w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90"
+              disabled={!articleUrl.trim()}
+            >
+              Добавить статью
+            </Button>
           </div>
         </div>
       )}

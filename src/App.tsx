@@ -19,9 +19,13 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Index />} />
           <Route path="/register" element={<Index />} />
+          <Route path="/forgot-password" element={<Index />} />
           <Route path="/feed" element={<Index />} />
           <Route path="/article/:id" element={<Index />} />
           <Route path="/library" element={<Index />} />
+          <Route path="/library/add" element={<Index />} />
+          <Route path="/library/add/book" element={<Index />} />
+          <Route path="/library/add/article" element={<Index />} />
           <Route path="/library/read/:id" element={<Index />} />
           <Route path="/profile" element={<Index />} />
           <Route path="/profile/goals" element={<Index />} />
