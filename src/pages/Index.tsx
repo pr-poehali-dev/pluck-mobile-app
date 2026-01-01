@@ -180,6 +180,9 @@ const Index = () => {
     } else if (path === '/register') {
       setScreen('auth');
       setIsLogin(false);
+    } else if (path === '/forgot-password') {
+      setScreen('forgot-password');
+      setIsAuthenticated(false);
     } else if (path === '/feed') {
       setScreen('feed');
       setIsAuthenticated(true);
@@ -217,9 +220,6 @@ const Index = () => {
     } else if (path === '/profile/help') {
       setScreen('help');
       setIsAuthenticated(true);
-    } else if (path === '/forgot-password') {
-      setScreen('forgot-password');
-      setIsAuthenticated(false);
     } else if (path === '/library/add') {
       setScreen('library-add-choice');
       setIsAuthenticated(true);
