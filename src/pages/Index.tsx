@@ -11,7 +11,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
-type Screen = 'auth' | 'feed' | 'reader' | 'library' | 'library-reader' | 'library-add-choice' | 'library-add-book' | 'library-add-article' | 'profile' | 'goals' | 'settings' | 'help' | 'sources' | 'forgot-password';
+type Screen = 'auth' | 'feed' | 'reader' | 'library' | 'library-reader' | 'library-add-choice' | 'library-add-book' | 'library-add-article' | 'profile' | 'goals' | 'settings' | 'help' | 'sources' | 'forgot-password' | 'security' | 'verify-contact';
 type ReadFormat = 'short' | 'full';
 type UserRole = 'Читатель' | 'Модератор' | 'Разработчик';
 
@@ -170,6 +170,10 @@ const Index = () => {
   const [articleUrl, setArticleUrl] = useState('');
   const [contentTags, setContentTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [userPhone, setUserPhone] = useState('');
+  const [hasVerifiedContact, setHasVerifiedContact] = useState(false);
+  const [showVerifyDialog, setShowVerifyDialog] = useState(false);
 
   useEffect(() => {
     const path = location.pathname;
@@ -220,6 +224,12 @@ const Index = () => {
     } else if (path === '/profile/help') {
       setScreen('help');
       setIsAuthenticated(true);
+    } else if (path === '/profile/security') {
+      setScreen('security');
+      setIsAuthenticated(true);
+    } else if (path === '/verify-contact') {
+      setScreen('verify-contact');
+      setIsAuthenticated(true);
     } else if (path === '/library/add') {
       setScreen('library-add-choice');
       setIsAuthenticated(true);
@@ -250,7 +260,11 @@ const Index = () => {
 
   const handleAuth = () => {
     setIsAuthenticated(true);
-    navigateTo('/feed');
+    if (!hasVerifiedContact) {
+      setShowVerifyDialog(true);
+    } else {
+      navigateTo('/feed');
+    }
   };
 
   const categories = ['Для вас', 'Технологии', 'Наука', 'Сохранённое'];
@@ -1136,6 +1150,7 @@ const Index = () => {
               {[
                 { icon: 'Rss', label: 'Источники RSS', path: '/profile/sources' },
                 { icon: 'Target', label: 'Цели чтения', path: '/profile/goals' },
+                { icon: 'Shield', label: 'Безопасность', path: '/profile/security' },
                 { icon: 'Settings', label: 'Настройки приложения', path: '/profile/settings' },
                 { icon: 'HelpCircle', label: 'Помощь и поддержка', path: '/profile/help' },
                 { icon: 'LogOut', label: 'Выйти', path: '/login' },
@@ -1489,8 +1504,243 @@ const Index = () => {
         </div>
       )}
 
+      {/* Security Screen */}
+      {screen === 'security' && (
+        <div className="fade-in">
+          <div className="sticky top-0 z-10 bg-[var(--bg-primary)] border-b border-[var(--divider)] px-4 py-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigateTo('/profile')}
+              >
+                <Icon name="ArrowLeft" size={20} />
+              </Button>
+              <h1 className="text-2xl font-bold">Безопасность</h1>
+            </div>
+          </div>
+
+          <div className="px-4 py-6 space-y-6">
+            <div className="bg-[var(--bg-secondary)] rounded-xl p-4">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-[var(--accent)]/10 flex items-center justify-center flex-shrink-0">
+                  <Icon name="Shield" size={20} className="text-[var(--accent)]" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1">Защита аккаунта</h3>
+                  <p className="text-sm text-[var(--text-tertiary)]">
+                    Привяжите email или телефон для восстановления доступа и сохранения прогресса
+                  </p>
+                </div>
+              </div>
+
+              {!userEmail && !userPhone && (
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4">
+                  <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-500">
+                    <Icon name="AlertTriangle" size={16} />
+                    <span className="text-sm font-medium">Контакты не привязаны</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-[var(--bg-secondary)] rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <Icon name="Mail" size={20} className="text-[var(--text-tertiary)]" />
+                    <div>
+                      <p className="font-medium">Email</p>
+                      <p className="text-sm text-[var(--text-tertiary)]">
+                        {userEmail || 'Не привязан'}
+                      </p>
+                    </div>
+                  </div>
+                  {userEmail ? (
+                    <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-0">
+                      <Icon name="Check" size={12} className="mr-1" />
+                      Подтвержден
+                    </Badge>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => navigateTo('/verify-contact')}
+                    >
+                      Привязать
+                    </Button>
+                  )}
+                </div>
+                {!userEmail && (
+                  <p className="text-xs text-[var(--text-tertiary)] mt-2">
+                    Используется для восстановления пароля и важных уведомлений
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-[var(--bg-secondary)] rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <Icon name="Phone" size={20} className="text-[var(--text-tertiary)]" />
+                    <div>
+                      <p className="font-medium">Телефон</p>
+                      <p className="text-sm text-[var(--text-tertiary)]">
+                        {userPhone || 'Не привязан'}
+                      </p>
+                    </div>
+                  </div>
+                  {userPhone ? (
+                    <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-0">
+                      <Icon name="Check" size={12} className="mr-1" />
+                      Подтвержден
+                    </Badge>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => navigateTo('/verify-contact')}
+                    >
+                      Привязать
+                    </Button>
+                  )}
+                </div>
+                {!userPhone && (
+                  <p className="text-xs text-[var(--text-tertiary)] mt-2">
+                    Дополнительный способ восстановления доступа
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {(userEmail || userPhone) && (
+              <div className="bg-[var(--bg-secondary)] rounded-xl p-4">
+                <h3 className="font-semibold mb-3">Смена пароля</h3>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigateTo('/forgot-password')}
+                >
+                  <Icon name="Key" size={16} className="mr-2" />
+                  Изменить пароль
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Verify Contact Screen */}
+      {screen === 'verify-contact' && (
+        <div className="min-h-screen fade-in">
+          <div className="sticky top-0 z-10 bg-[var(--bg-primary)] border-b border-[var(--divider)] px-4 py-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigateTo('/profile/security')}
+              >
+                <Icon name="ArrowLeft" size={20} />
+              </Button>
+              <h1 className="text-xl font-semibold">Привязать контакт</h1>
+            </div>
+          </div>
+
+          <div className="px-4 pt-6 space-y-6 pb-24">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="verify-email">Email</Label>
+                <Input
+                  id="verify-email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  className="bg-[var(--bg-secondary)] border-0"
+                />
+                <p className="text-xs text-[var(--text-tertiary)]">
+                  Мы отправим код подтверждения на этот email
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-[var(--divider)]" />
+                <span className="text-sm text-[var(--text-tertiary)]">или</span>
+                <div className="h-px flex-1 bg-[var(--divider)]" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="verify-phone">Телефон</Label>
+                <Input
+                  id="verify-phone"
+                  type="tel"
+                  placeholder="+7 (999) 123-45-67"
+                  value={userPhone}
+                  onChange={(e) => setUserPhone(e.target.value)}
+                  className="bg-[var(--bg-secondary)] border-0"
+                />
+                <p className="text-xs text-[var(--text-tertiary)]">
+                  Мы отправим SMS с кодом подтверждения
+                </p>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => {
+                if (userEmail || userPhone) {
+                  setHasVerifiedContact(true);
+                  alert('Код подтверждения отправлен!');
+                  navigateTo('/profile/security');
+                } else {
+                  alert('Укажите email или телефон');
+                }
+              }}
+              className="w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90"
+              disabled={!userEmail && !userPhone}
+            >
+              Отправить код
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Verify Contact Dialog */}
+      <Dialog open={showVerifyDialog} onOpenChange={setShowVerifyDialog}>
+        <DialogContent className="bg-[var(--bg-secondary)] border-[var(--divider)]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Icon name="Shield" size={24} className="text-[var(--accent)]" />
+              Защитите свой аккаунт
+            </DialogTitle>
+            <DialogDescription className="text-[var(--text-secondary)]">
+              Привяжите email или телефон, чтобы не потерять доступ к своему прогрессу и сохраненным материалам
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <Button
+              onClick={() => {
+                setShowVerifyDialog(false);
+                navigateTo('/verify-contact');
+              }}
+              className="w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90"
+            >
+              Привязать контакт
+            </Button>
+            <Button
+              onClick={() => {
+                setShowVerifyDialog(false);
+                navigateTo('/feed');
+              }}
+              variant="ghost"
+              className="w-full"
+            >
+              Пропустить
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Bottom Navigation */}
-      {screen !== 'auth' && screen !== 'goals' && screen !== 'settings' && screen !== 'help' && screen !== 'library-reader' && screen !== 'sources' && (
+      {screen !== 'auth' && screen !== 'goals' && screen !== 'settings' && screen !== 'help' && screen !== 'library-reader' && screen !== 'sources' && screen !== 'security' && screen !== 'verify-contact' && screen !== 'library-add-choice' && screen !== 'library-add-book' && screen !== 'library-add-article' && (
         <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-secondary)] border-t border-[var(--divider)] px-6 py-3 z-20">
           <div className="flex justify-around items-center">
             {[
