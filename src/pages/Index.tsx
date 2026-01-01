@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 
 type Screen = 'feed' | 'reader' | 'library' | 'profile';
 
@@ -273,14 +273,18 @@ const Index = () => {
             </div>
 
             {/* Filter Tabs */}
-            <Tabs defaultValue="all" className="w-full">
-              <TabsList className="w-full grid grid-cols-4 bg-[var(--bg-secondary)]">
-                <TabsTrigger value="all">Все</TabsTrigger>
-                <TabsTrigger value="saved">Позже</TabsTrigger>
-                <TabsTrigger value="history">История</TabsTrigger>
-                <TabsTrigger value="downloads">Офлайн</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {['Все', 'Позже', 'История', 'Офлайн'].map(tab => (
+                <Button
+                  key={tab}
+                  variant="ghost"
+                  className="rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
+                  size="sm"
+                >
+                  {tab}
+                </Button>
+              ))}
+            </div>
           </div>
 
           {/* Library Grid */}
