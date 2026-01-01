@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -148,6 +149,10 @@ const libraryItems: Article[] = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const params = useParams();
+  
   const [screen, setScreen] = useState<Screen>('auth');
   const [isLogin, setIsLogin] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -161,6 +166,59 @@ const Index = () => {
   const [autoPlay, setAutoPlay] = useState(false);
   const [sources, setSources] = useState<RSSSource[]>(availableSources);
   const [readFormat, setReadFormat] = useState<ReadFormat>('short');
+
+  useEffect(() => {
+    const path = location.pathname;
+    
+    if (path === '/' || path === '/login') {
+      setScreen('auth');
+      setIsLogin(true);
+    } else if (path === '/register') {
+      setScreen('auth');
+      setIsLogin(false);
+    } else if (path === '/feed') {
+      setScreen('feed');
+      setIsAuthenticated(true);
+    } else if (path.startsWith('/article/')) {
+      const id = parseInt(params.id || '0');
+      const article = mockArticles.find(a => a.id === id);
+      if (article) {
+        setSelectedArticle(article);
+        setScreen('reader');
+        setIsAuthenticated(true);
+      }
+    } else if (path.startsWith('/library/read/')) {
+      const id = parseInt(params.id || '0');
+      const article = libraryItems.find(a => a.id === id);
+      if (article) {
+        setSelectedArticle(article);
+        setScreen('library-reader');
+        setIsAuthenticated(true);
+      }
+    } else if (path === '/library') {
+      setScreen('library');
+      setIsAuthenticated(true);
+    } else if (path === '/profile') {
+      setScreen('profile');
+      setIsAuthenticated(true);
+    } else if (path === '/profile/goals') {
+      setScreen('goals');
+      setIsAuthenticated(true);
+    } else if (path.startsWith('/profile/settings')) {
+      setScreen('settings');
+      setIsAuthenticated(true);
+    } else if (path === '/profile/sources') {
+      setScreen('sources');
+      setIsAuthenticated(true);
+    } else if (path === '/profile/help') {
+      setScreen('help');
+      setIsAuthenticated(true);
+    }
+  }, [location.pathname, params.id]);
+
+  const navigateTo = (path: string) => {
+    navigate(path);
+  };
 
   const toggleSave = (id: number) => {
     setArticles(prev =>
@@ -176,7 +234,7 @@ const Index = () => {
 
   const handleAuth = () => {
     setIsAuthenticated(true);
-    setScreen('feed');
+    navigateTo('/feed');
   };
 
   const categories = ['Для вас', 'Технологии', 'Наука', 'Сохранённое'];
@@ -195,7 +253,10 @@ const Index = () => {
           <div className="bg-[var(--bg-secondary)] rounded-2xl p-6 space-y-6">
             <div className="flex gap-2">
               <Button
-                onClick={() => setIsLogin(true)}
+                onClick={() => {
+                  setIsLogin(true);
+                  navigateTo('/login');
+                }}
                 className={`flex-1 ${
                   isLogin
                     ? 'bg-[var(--accent)] hover:bg-[var(--accent)]/90'
@@ -205,7 +266,10 @@ const Index = () => {
                 Вход
               </Button>
               <Button
-                onClick={() => setIsLogin(false)}
+                onClick={() => {
+                  setIsLogin(false);
+                  navigateTo('/register');
+                }}
                 className={`flex-1 ${
                   !isLogin
                     ? 'bg-[var(--accent)] hover:bg-[var(--accent)]/90'
@@ -323,7 +387,7 @@ const Index = () => {
                       className="text-lg font-semibold text-[var(--text-primary)] mb-2 leading-tight cursor-pointer hover:text-[var(--accent)] transition-colors"
                       onClick={() => {
                         setSelectedArticle(article);
-                        setScreen('reader');
+                        navigateTo(`/article/${article.id}`);
                       }}
                     >
                       {article.title}
@@ -400,7 +464,7 @@ const Index = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setScreen('feed')}
+                onClick={() => navigateTo('/feed')}
               >
                 <Icon name="ArrowLeft" size={20} />
               </Button>
@@ -512,7 +576,7 @@ const Index = () => {
                 className="bg-[var(--bg-secondary)] rounded-xl p-4 hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
                 onClick={() => {
                   setSelectedArticle(item);
-                  setScreen('library-reader');
+                  navigateTo(`/library/read/${item.id}`);
                 }}
               >
                 <div className="flex gap-3">
@@ -545,7 +609,7 @@ const Index = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setScreen('library')}
+                onClick={() => navigateTo('/library')}
               >
                 <Icon name="ArrowLeft" size={20} />
               </Button>
@@ -653,7 +717,7 @@ const Index = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setScreen('settings')}
+                onClick={() => navigateTo('/profile/settings')}
               >
                 <Icon name="Settings" size={20} />
               </Button>
@@ -738,21 +802,19 @@ const Index = () => {
 
             <div className="space-y-2">
               {[
-                { icon: 'Rss', label: 'Источники RSS', screen: 'sources' },
-                { icon: 'Target', label: 'Цели чтения', screen: 'goals' },
-                { icon: 'Settings', label: 'Настройки приложения', screen: 'settings' },
-                { icon: 'HelpCircle', label: 'Помощь и поддержка', screen: 'help' },
-                { icon: 'LogOut', label: 'Выйти', screen: 'auth' },
+                { icon: 'Rss', label: 'Источники RSS', path: '/profile/sources' },
+                { icon: 'Target', label: 'Цели чтения', path: '/profile/goals' },
+                { icon: 'Settings', label: 'Настройки приложения', path: '/profile/settings' },
+                { icon: 'HelpCircle', label: 'Помощь и поддержка', path: '/profile/help' },
+                { icon: 'LogOut', label: 'Выйти', path: '/login' },
               ].map(item => (
                 <button
                   key={item.label}
                   onClick={() => {
-                    if (item.screen === 'auth') {
+                    if (item.path === '/login') {
                       setIsAuthenticated(false);
-                      setScreen('auth');
-                    } else {
-                      setScreen(item.screen as Screen);
                     }
+                    navigateTo(item.path);
                   }}
                   className="w-full flex items-center justify-between bg-[var(--bg-secondary)] rounded-xl p-4 hover:bg-[var(--bg-tertiary)] transition-colors"
                 >
@@ -776,7 +838,7 @@ const Index = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setScreen('profile')}
+                onClick={() => navigateTo('/profile')}
               >
                 <Icon name="ArrowLeft" size={20} />
               </Button>
@@ -862,7 +924,7 @@ const Index = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setScreen('profile')}
+                onClick={() => navigateTo('/profile')}
               >
                 <Icon name="ArrowLeft" size={20} />
               </Button>
@@ -930,7 +992,7 @@ const Index = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setScreen('profile')}
+                onClick={() => navigateTo('/profile')}
               >
                 <Icon name="ArrowLeft" size={20} />
               </Button>
@@ -994,7 +1056,7 @@ const Index = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setScreen('profile')}
+                onClick={() => navigateTo('/profile')}
               >
                 <Icon name="ArrowLeft" size={20} />
               </Button>
@@ -1100,27 +1162,27 @@ const Index = () => {
         <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-secondary)] border-t border-[var(--divider)] px-6 py-3 z-20">
           <div className="flex justify-around items-center">
             {[
-              { id: 'feed', icon: 'Home', label: 'Лента' },
-              { id: 'library', icon: 'Library', label: 'Библиотека' },
-              { id: 'profile', icon: 'User', label: 'Профиль' },
+              { id: 'feed', icon: 'Home', label: 'Лента', path: '/feed' },
+              { id: 'library', icon: 'Library', label: 'Библиотека', path: '/library' },
+              { id: 'profile', icon: 'User', label: 'Профиль', path: '/profile' },
             ].map(nav => (
               <button
                 key={nav.id}
-                onClick={() => setScreen(nav.id as Screen)}
+                onClick={() => navigateTo(nav.path)}
                 className="flex flex-col items-center gap-1 transition-colors"
               >
                 <Icon
                   name={nav.icon as any}
                   size={24}
                   className={
-                    screen === nav.id
+                    location.pathname === nav.path
                       ? 'text-[var(--accent)]'
                       : 'text-[var(--text-tertiary)]'
                   }
                 />
                 <span
                   className={`text-xs ${
-                    screen === nav.id
+                    location.pathname === nav.path
                       ? 'text-[var(--accent)]'
                       : 'text-[var(--text-tertiary)]'
                   }`}
