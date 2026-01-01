@@ -10,7 +10,8 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
-type Screen = 'auth' | 'feed' | 'reader' | 'library' | 'library-reader' | 'profile' | 'goals' | 'settings' | 'help';
+type Screen = 'auth' | 'feed' | 'reader' | 'library' | 'library-reader' | 'profile' | 'goals' | 'settings' | 'help' | 'sources';
+type ReadFormat = 'short' | 'full';
 type UserRole = 'Читатель' | 'Модератор' | 'Разработчик';
 
 interface Article {
@@ -23,48 +24,120 @@ interface Article {
   category: string;
   progress?: number;
   tags: string[];
+  fullContent?: string;
 }
+
+interface RSSSource {
+  id: string;
+  name: string;
+  url: string;
+  logo: string;
+  topics: string[];
+  enabled: boolean;
+  selectedTopics: string[];
+}
+
+const availableSources: RSSSource[] = [
+  {
+    id: 'habr',
+    name: 'Habr',
+    url: 'https://habr.com',
+    logo: '🔧',
+    topics: ['Разработка', 'Дизайн', 'Менеджмент', 'Маркетинг', 'Наука'],
+    enabled: false,
+    selectedTopics: [],
+  },
+  {
+    id: 'vc',
+    name: 'VC.ru',
+    url: 'https://vc.ru',
+    logo: '💼',
+    topics: ['Стартапы', 'Маркетинг', 'Финансы', 'Технологии', 'Кейсы'],
+    enabled: false,
+    selectedTopics: [],
+  },
+  {
+    id: 'meduza',
+    name: 'Медуза',
+    url: 'https://meduza.io',
+    logo: '📰',
+    topics: ['Новости', 'Политика', 'Общество', 'Наука', 'Культура'],
+    enabled: false,
+    selectedTopics: [],
+  },
+  {
+    id: 'tproger',
+    name: 'Tproger',
+    url: 'https://tproger.ru',
+    logo: '💻',
+    topics: ['Программирование', 'Карьера', 'Обучение', 'Инструменты'],
+    enabled: false,
+    selectedTopics: [],
+  },
+  {
+    id: 'medium',
+    name: 'Medium',
+    url: 'https://medium.com',
+    logo: '✍️',
+    topics: ['Технологии', 'Дизайн', 'Бизнес', 'Личное развитие', 'Психология'],
+    enabled: false,
+    selectedTopics: [],
+  },
+  {
+    id: 'sciencedaily',
+    name: 'Science Daily',
+    url: 'https://sciencedaily.com',
+    logo: '🔬',
+    topics: ['Физика', 'Биология', 'Космос', 'Медицина', 'Экология'],
+    enabled: false,
+    selectedTopics: [],
+  },
+];
 
 const mockArticles: Article[] = [
   {
     id: 1,
     title: 'Как работает квантовая запутанность в современной физике',
-    source: 'Наука Today',
+    source: 'Science Daily',
     preview: 'Квантовая механика продолжает удивлять учёных своими необычными свойствами. Запутанность частиц позволяет им мгновенно влиять друг на друга...',
     readTime: 12,
     saved: false,
     category: 'Наука',
     tags: ['Физика', 'Квантовая механика', 'Наука'],
+    fullContent: 'Квантовая механика продолжает удивлять учёных своими необычными свойствами. Запутанность частиц позволяет им мгновенно влиять друг на друга независимо от расстояния. Это явление, которое Эйнштейн назвал "жутким дальнодействием", стало основой для квантовых компьютеров и квантовой криптографии. Современные эксперименты доказывают, что запутанность реальна и может быть использована для передачи информации быстрее света в определённых условиях. Учёные продолжают исследовать это удивительное свойство квантового мира, открывая новые возможности для технологий будущего.',
   },
   {
     id: 2,
     title: 'Будущее искусственного интеллекта: что нас ждёт в 2026 году',
-    source: 'Tech Review',
+    source: 'Habr',
     preview: 'ИИ-модели становятся всё более мощными и доступными. Эксперты предсказывают революцию в медицине, образовании и творческих индустриях...',
     readTime: 8,
     saved: true,
     category: 'Технологии',
     tags: ['ИИ', 'Технологии', 'Будущее'],
+    fullContent: 'ИИ-модели становятся всё более мощными и доступными. Эксперты предсказывают революцию в медицине, образовании и творческих индустриях. Уже сейчас искусственный интеллект помогает врачам ставить диагнозы точнее, чем человек, создаёт персонализированные образовательные программы и генерирует контент для креативных индустрий. В 2026 году мы увидим ещё более глубокую интеграцию ИИ в повседневную жизнь: от умных ассистентов, которые понимают контекст, до автономных систем принятия решений в бизнесе. Однако вместе с возможностями приходят и вызовы: вопросы этики, приватности и регулирования ИИ становятся всё более актуальными.',
   },
   {
     id: 3,
     title: 'Минимализм в дизайне: меньше значит больше',
-    source: 'Design Weekly',
+    source: 'Medium',
     preview: 'Современные интерфейсы стремятся к простоте. Убираем всё лишнее, оставляем только важное — это философия нового поколения дизайнеров...',
     readTime: 6,
     saved: false,
     category: 'Дизайн',
     tags: ['Дизайн', 'UI/UX', 'Минимализм'],
+    fullContent: 'Современные интерфейсы стремятся к простоте. Убираем всё лишнее, оставляем только важное — это философия нового поколения дизайнеров. Минимализм — это не просто тренд, а осознанный подход к созданию продуктов. Пользователи перегружены информацией, и задача дизайнера — убрать шум, оставив только то, что действительно важно. Apple, Google и другие технологические гиганты давно поняли эту истину и применяют принципы минимализма в своих продуктах. Результат — интуитивные интерфейсы, которые не требуют обучения.',
   },
   {
     id: 4,
     title: 'Нейробиология счастья: как мозг создаёт эмоции',
-    source: 'Brain Science',
+    source: 'Science Daily',
     preview: 'Исследования показывают, что счастье — это не случайность, а результат работы сложных химических процессов в нашем мозге...',
     readTime: 15,
     saved: true,
     category: 'Наука',
     tags: ['Нейробиология', 'Психология', 'Наука'],
+    fullContent: 'Исследования показывают, что счастье — это не случайность, а результат работы сложных химических процессов в нашем мозге. Дофамин, серотонин, окситоцин и эндорфины — четыре основных нейромедиатора счастья. Каждый из них отвечает за разные аспекты: дофамин за мотивацию и награду, серотонин за настроение и уверенность, окситоцин за привязанность и доверие, эндорфины за облегчение боли и эйфорию. Понимание этих механизмов позволяет нам сознательно влиять на своё эмоциональное состояние через питание, физическую активность, медитацию и социальные связи.',
   },
 ];
 
@@ -86,6 +159,8 @@ const Index = () => {
   const [dailyGoal, setDailyGoal] = useState(30);
   const [notifications, setNotifications] = useState(true);
   const [autoPlay, setAutoPlay] = useState(false);
+  const [sources, setSources] = useState<RSSSource[]>(availableSources);
+  const [readFormat, setReadFormat] = useState<ReadFormat>('short');
 
   const toggleSave = (id: number) => {
     setArticles(prev =>
@@ -464,9 +539,9 @@ const Index = () => {
 
       {/* Library Reader Screen */}
       {screen === 'library-reader' && selectedArticle && (
-        <div className="fade-in">
+        <div className="fade-in pb-20">
           <div className="sticky top-0 z-10 bg-[var(--bg-primary)]/95 backdrop-blur-sm border-b border-[var(--divider)] px-4 py-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <Button
                 variant="ghost"
                 size="icon"
@@ -481,6 +556,35 @@ const Index = () => {
                 <Icon name="MoreVertical" size={20} />
               </Button>
             </div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setReadFormat('short')}
+                variant={readFormat === 'short' ? 'default' : 'ghost'}
+                className={`flex-1 rounded-full ${
+                  readFormat === 'short'
+                    ? 'bg-[var(--accent)] hover:bg-[var(--accent)]/90'
+                    : 'text-[var(--text-secondary)]'
+                }`}
+                size="sm"
+              >
+                <Icon name="Zap" size={16} className="mr-2" />
+                Краткий формат
+              </Button>
+              <Button
+                onClick={() => setReadFormat('full')}
+                variant={readFormat === 'full' ? 'default' : 'ghost'}
+                className={`flex-1 rounded-full ${
+                  readFormat === 'full'
+                    ? 'bg-[var(--accent)] hover:bg-[var(--accent)]/90'
+                    : 'text-[var(--text-secondary)]'
+                }`}
+                size="sm"
+              >
+                <Icon name="FileText" size={16} className="mr-2" />
+                Полный текст
+              </Button>
+            </div>
           </div>
 
           <div className="px-6 py-8 max-w-2xl mx-auto">
@@ -491,16 +595,35 @@ const Index = () => {
               {selectedArticle.source} · {selectedArticle.readTime} мин чтения
             </div>
 
-            <div className="prose prose-invert max-w-none">
-              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-                {selectedArticle.preview}
-              </p>
-              <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
-                Продолжение вашего чтения. Здесь вы остановились в прошлый раз.
-                Приложение запомнило вашу позицию и теперь вы можете продолжить
-                с того же места.
-              </p>
-            </div>
+            {readFormat === 'short' ? (
+              <div className="prose prose-invert max-w-none">
+                <div className="bg-[var(--bg-secondary)] rounded-xl p-4 mb-6 border-l-4 border-[var(--accent)]">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Icon name="Sparkles" size={18} className="text-[var(--accent)]" />
+                    <span className="text-sm font-semibold text-[var(--accent)]">
+                      Краткое содержание
+                    </span>
+                  </div>
+                  <p className="text-[var(--text-secondary)] leading-relaxed">
+                    {selectedArticle.preview}
+                  </p>
+                </div>
+                <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
+                  В кратком формате вы получаете суть статьи за минуту. 
+                  Основные идеи, ключевые выводы и важные факты — всё 
+                  структурировано и легко усваивается.
+                </p>
+              </div>
+            ) : (
+              <div className="prose prose-invert max-w-none">
+                <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
+                  {selectedArticle.preview}
+                </p>
+                <p className="text-[var(--text-secondary)] leading-relaxed mb-4">
+                  {selectedArticle.fullContent || 'Полный текст статьи загружается...'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -615,6 +738,7 @@ const Index = () => {
 
             <div className="space-y-2">
               {[
+                { icon: 'Rss', label: 'Источники RSS', screen: 'sources' },
                 { icon: 'Target', label: 'Цели чтения', screen: 'goals' },
                 { icon: 'Settings', label: 'Настройки приложения', screen: 'settings' },
                 { icon: 'HelpCircle', label: 'Помощь и поддержка', screen: 'help' },
@@ -862,8 +986,117 @@ const Index = () => {
         </div>
       )}
 
+      {/* Sources Screen */}
+      {screen === 'sources' && (
+        <div className="fade-in pb-20">
+          <div className="sticky top-0 z-10 bg-[var(--bg-primary)] border-b border-[var(--divider)] px-4 py-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setScreen('profile')}
+              >
+                <Icon name="ArrowLeft" size={20} />
+              </Button>
+              <h1 className="text-2xl font-bold">Источники RSS</h1>
+            </div>
+            <p className="text-sm text-[var(--text-tertiary)] mt-2">
+              Выберите сайты и темы для персонализированной ленты
+            </p>
+          </div>
+
+          <div className="px-4 py-6 space-y-4">
+            {sources.map(source => (
+              <div
+                key={source.id}
+                className="bg-[var(--bg-secondary)] rounded-xl p-4"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-3xl">{source.logo}</div>
+                    <div>
+                      <h3 className="font-semibold">{source.name}</h3>
+                      <p className="text-xs text-[var(--text-tertiary)]">
+                        {source.url}
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={source.enabled}
+                    onCheckedChange={checked => {
+                      setSources(prev =>
+                        prev.map(s =>
+                          s.id === source.id ? { ...s, enabled: checked } : s
+                        )
+                      );
+                    }}
+                  />
+                </div>
+
+                {source.enabled && (
+                  <div className="space-y-2 pt-3 border-t border-[var(--divider)]">
+                    <p className="text-sm text-[var(--text-tertiary)] mb-2">
+                      Выберите темы:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {source.topics.map(topic => {
+                        const isSelected = source.selectedTopics.includes(topic);
+                        return (
+                          <button
+                            key={topic}
+                            onClick={() => {
+                              setSources(prev =>
+                                prev.map(s => {
+                                  if (s.id === source.id) {
+                                    const newSelected = isSelected
+                                      ? s.selectedTopics.filter(t => t !== topic)
+                                      : [...s.selectedTopics, topic];
+                                    return { ...s, selectedTopics: newSelected };
+                                  }
+                                  return s;
+                                })
+                              );
+                            }}
+                            className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                              isSelected
+                                ? 'bg-[var(--accent)] text-white'
+                                : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]/70'
+                            }`}
+                          >
+                            {topic}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <div className="bg-[var(--bg-secondary)] rounded-xl p-6 text-center">
+              <Icon
+                name="Plus"
+                size={32}
+                className="mx-auto mb-3 text-[var(--accent)]"
+              />
+              <h3 className="font-semibold mb-2">Добавить свой источник</h3>
+              <p className="text-sm text-[var(--text-tertiary)] mb-4">
+                Вставьте URL RSS-ленты
+              </p>
+              <Input
+                placeholder="https://example.com/rss"
+                className="bg-[var(--bg-tertiary)] border-0 mb-3"
+              />
+              <Button className="w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90">
+                Добавить источник
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom Navigation */}
-      {screen !== 'auth' && screen !== 'goals' && screen !== 'settings' && screen !== 'help' && screen !== 'library-reader' && (
+      {screen !== 'auth' && screen !== 'goals' && screen !== 'settings' && screen !== 'help' && screen !== 'library-reader' && screen !== 'sources' && (
         <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-secondary)] border-t border-[var(--divider)] px-6 py-3 z-20">
           <div className="flex justify-around items-center">
             {[
