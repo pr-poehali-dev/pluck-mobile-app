@@ -34,6 +34,8 @@ const App = () => (
           <Route path="/profile/settings/reading" element={<Index />} />
           <Route path="/profile/settings/role" element={<Index />} />
           <Route path="/profile/security" element={<Index />} />
+          <Route path="/profile/premium" element={<Index />} />
+          <Route path="/profile/achievements" element={<Index />} />
           <Route path="/profile/sources" element={<Index />} />
           <Route path="/profile/help" element={<Index />} />
           <Route path="/verify-contact" element={<Index />} />

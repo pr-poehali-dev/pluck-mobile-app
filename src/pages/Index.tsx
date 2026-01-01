@@ -11,7 +11,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
-type Screen = 'auth' | 'feed' | 'reader' | 'library' | 'library-reader' | 'library-add-choice' | 'library-add-book' | 'library-add-article' | 'profile' | 'goals' | 'settings' | 'help' | 'sources' | 'forgot-password' | 'security' | 'verify-contact';
+type Screen = 'auth' | 'feed' | 'reader' | 'library' | 'library-reader' | 'library-add-choice' | 'library-add-book' | 'library-add-article' | 'profile' | 'goals' | 'settings' | 'help' | 'sources' | 'forgot-password' | 'security' | 'verify-contact' | 'premium' | 'achievements';
 type ReadFormat = 'short' | 'full';
 type UserRole = 'Читатель' | 'Модератор' | 'Разработчик';
 
@@ -142,12 +142,6 @@ const mockArticles: Article[] = [
   },
 ];
 
-const libraryItems: Article[] = [
-  { ...mockArticles[1], progress: 65 },
-  { ...mockArticles[3], progress: 30 },
-  { ...mockArticles[0], progress: 100 },
-];
-
 const Index = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -159,6 +153,11 @@ const Index = () => {
   const [userRole, setUserRole] = useState<UserRole>('Читатель');
   const [activeCategory, setActiveCategory] = useState('Для вас');
   const [articles, setArticles] = useState(mockArticles);
+  const [libraryItems, setLibraryItems] = useState<Article[]>([
+    { ...mockArticles[1], progress: 65 },
+    { ...mockArticles[3], progress: 30 },
+    { ...mockArticles[0], progress: 100 },
+  ]);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [readProgress, setReadProgress] = useState(42);
   const [dailyGoal, setDailyGoal] = useState(30);
@@ -174,6 +173,11 @@ const Index = () => {
   const [userPhone, setUserPhone] = useState('');
   const [hasVerifiedContact, setHasVerifiedContact] = useState(false);
   const [showVerifyDialog, setShowVerifyDialog] = useState(false);
+  const [libraryFilter, setLibraryFilter] = useState('all');
+  const [fontSize, setFontSize] = useState(16);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isPremium, setIsPremium] = useState(false);
+  const [userAchievements, setUserAchievements] = useState<string[]>(['first-steps', 'week-streak']);
 
   useEffect(() => {
     const path = location.pathname;
@@ -226,6 +230,12 @@ const Index = () => {
       setIsAuthenticated(true);
     } else if (path === '/profile/security') {
       setScreen('security');
+      setIsAuthenticated(true);
+    } else if (path === '/profile/premium') {
+      setScreen('premium');
+      setIsAuthenticated(true);
+    } else if (path === '/profile/achievements') {
+      setScreen('achievements');
       setIsAuthenticated(true);
     } else if (path === '/verify-contact') {
       setScreen('verify-contact');
@@ -647,30 +657,50 @@ const Index = () => {
             </div>
 
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {['Все', 'Позже', 'История', 'Офлайн'].map(tab => (
+              {[
+                { id: 'all', label: 'Все' },
+                { id: 'books', label: 'Книги' },
+                { id: 'articles', label: 'Статьи' },
+                { id: 'saved', label: 'Избранное' },
+              ].map(tab => (
                 <Button
-                  key={tab}
+                  key={tab.id}
+                  onClick={() => setLibraryFilter(tab.id)}
                   variant="ghost"
-                  className="rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
+                  className={`rounded-full ${
+                    libraryFilter === tab.id
+                      ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
+                  }`}
                   size="sm"
                 >
-                  {tab}
+                  {tab.label}
                 </Button>
               ))}
             </div>
           </div>
 
           <div className="px-4 pt-4 space-y-3">
-            {libraryItems.map(item => (
+            {libraryItems
+              .filter(item => {
+                if (libraryFilter === 'all') return true;
+                if (libraryFilter === 'books') return item.category === 'Книга';
+                if (libraryFilter === 'articles') return item.category !== 'Книга';
+                if (libraryFilter === 'saved') return item.saved;
+                return true;
+              })
+              .map(item => (
               <div
                 key={item.id}
-                className="bg-[var(--bg-secondary)] rounded-xl p-4 hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
-                onClick={() => {
-                  setSelectedArticle(item);
-                  navigateTo(`/library/read/${item.id}`);
-                }}
+                className="bg-[var(--bg-secondary)] rounded-xl p-4 hover:bg-[var(--bg-tertiary)] transition-colors relative group"
               >
-                <div className="flex gap-3">
+                <div 
+                  className="flex gap-3 cursor-pointer"
+                  onClick={() => {
+                    setSelectedArticle(item);
+                    navigateTo(`/library/read/${item.id}`);
+                  }}
+                >
                   <div className="flex-1">
                     <h3 className="font-semibold text-[var(--text-primary)] mb-1 line-clamp-2">
                       {item.title}
@@ -685,6 +715,19 @@ const Index = () => {
                       </span>
                     </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm('Удалить из библиотеки?')) {
+                        setLibraryItems(prev => prev.filter(i => i.id !== item.id));
+                      }
+                    }}
+                  >
+                    <Icon name="Trash2" size={18} className="text-red-500" />
+                  </Button>
                 </div>
               </div>
             ))}
@@ -997,7 +1040,7 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="px-6 py-8 max-w-2xl mx-auto">
+          <div className="px-6 py-8 max-w-2xl mx-auto" style={{ fontSize: `${fontSize}px` }}>
             <h1 className="text-3xl font-bold leading-tight mb-3">
               {selectedArticle.title}
             </h1>
@@ -1034,6 +1077,55 @@ const Index = () => {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Reading Controls */}
+          <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-secondary)]/95 backdrop-blur-sm border-t border-[var(--divider)] px-4 py-3 z-20">
+            <div className="flex items-center justify-between max-w-2xl mx-auto">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+              >
+                <Icon name="ChevronLeft" size={18} />
+                Назад
+              </Button>
+              
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setFontSize(Math.max(12, fontSize - 2))}
+                >
+                  <Icon name="Minus" size={16} />
+                </Button>
+                <span className="text-sm text-[var(--text-tertiary)] min-w-[60px] text-center">
+                  {fontSize}px
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setFontSize(Math.min(24, fontSize + 2))}
+                >
+                  <Icon name="Plus" size={16} />
+                </Button>
+              </div>
+
+              <span className="text-sm text-[var(--text-tertiary)]">
+                {currentPage} / 5
+              </span>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentPage(Math.min(5, currentPage + 1))}
+                disabled={currentPage === 5}
+              >
+                Далее
+                <Icon name="ChevronRight" size={18} />
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -1146,8 +1238,31 @@ const Index = () => {
               </div>
             </div>
 
+            {!isPremium && (
+              <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl p-6 mb-6 border border-purple-500/20">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                    <Icon name="Crown" size={24} className="text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1">Pluck Premium</h3>
+                    <p className="text-sm text-[var(--text-tertiary)] mb-3">
+                      Безлимитные статьи, офлайн-режим и многое другое
+                    </p>
+                    <Button
+                      onClick={() => navigateTo('/profile/premium')}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                    >
+                      Попробовать Premium
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               {[
+                { icon: 'Award', label: 'Достижения', path: '/profile/achievements', badge: userAchievements.length },
                 { icon: 'Rss', label: 'Источники RSS', path: '/profile/sources' },
                 { icon: 'Target', label: 'Цели чтения', path: '/profile/goals' },
                 { icon: 'Shield', label: 'Безопасность', path: '/profile/security' },
@@ -1168,6 +1283,11 @@ const Index = () => {
                   <div className="flex items-center gap-3">
                     <Icon name={item.icon as any} size={20} />
                     <span>{item.label}</span>
+                    {item.badge && (
+                      <Badge className="bg-[var(--accent)] text-white">
+                        {item.badge}
+                      </Badge>
+                    )}
                   </div>
                   <Icon name="ChevronRight" size={20} />
                 </button>
@@ -1298,14 +1418,42 @@ const Index = () => {
 
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Чтение</h3>
-              <div className="bg-[var(--bg-secondary)] rounded-xl p-4 flex items-center justify-between">
-                <div>
-                  <h4 className="font-semibold mb-1">Автовоспроизведение</h4>
-                  <p className="text-sm text-[var(--text-tertiary)]">
-                    Автоматическое аудио
+              <div className="bg-[var(--bg-secondary)] rounded-xl p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold mb-1">Автовоспроизведение</h4>
+                    <p className="text-sm text-[var(--text-tertiary)]">
+                      Автоматическое аудио
+                    </p>
+                  </div>
+                  <Switch checked={autoPlay} onCheckedChange={setAutoPlay} />
+                </div>
+                
+                <div className="pt-4 border-t border-[var(--divider)]">
+                  <h4 className="font-semibold mb-3">Размер шрифта</h4>
+                  <div className="flex items-center gap-4">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setFontSize(Math.max(12, fontSize - 2))}
+                    >
+                      <Icon name="Minus" size={16} />
+                    </Button>
+                    <span className="text-2xl font-semibold text-[var(--accent)] min-w-[60px] text-center">
+                      {fontSize}px
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setFontSize(Math.min(24, fontSize + 2))}
+                    >
+                      <Icon name="Plus" size={16} />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-[var(--text-tertiary)] mt-2">
+                    Размер шрифта при чтении статей
                   </p>
                 </div>
-                <Switch checked={autoPlay} onCheckedChange={setAutoPlay} />
               </div>
             </div>
 
@@ -1326,6 +1474,178 @@ const Index = () => {
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Premium Screen */}
+      {screen === 'premium' && (
+        <div className="min-h-screen fade-in">
+          <div className="sticky top-0 z-10 bg-[var(--bg-primary)] border-b border-[var(--divider)] px-4 py-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigateTo('/profile')}
+              >
+                <Icon name="ArrowLeft" size={20} />
+              </Button>
+              <h1 className="text-2xl font-bold">Pluck Premium</h1>
+            </div>
+          </div>
+
+          <div className="px-4 py-6 space-y-6">
+            <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl p-8 text-center border border-purple-500/30">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <Icon name="Crown" size={40} className="text-white" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Улучшите свой опыт</h2>
+              <p className="text-[var(--text-tertiary)]">
+                Получите доступ ко всем функциям Pluck
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="font-semibold text-lg">Что включено:</h3>
+              {[
+                { icon: 'Infinity', title: 'Безлимитные статьи', desc: 'Читайте сколько угодно без ограничений' },
+                { icon: 'Download', title: 'Офлайн-режим', desc: 'Скачивайте статьи для чтения без интернета' },
+                { icon: 'Sparkles', title: 'Приоритетная обработка', desc: 'Моментальные саммари с помощью ИИ' },
+                { icon: 'BookMarked', title: 'Расширенная библиотека', desc: 'Неограниченное хранилище для ваших материалов' },
+                { icon: 'Palette', title: 'Темы оформления', desc: 'Эксклюзивные темы и настройка интерфейса' },
+                { icon: 'BarChart3', title: 'Расширенная статистика', desc: 'Детальная аналитика вашего прогресса' },
+                { icon: 'Zap', title: 'Без рекламы', desc: 'Чистый интерфейс без отвлекающих элементов' },
+                { icon: 'HeadphonesIcon', title: 'Приоритетная поддержка', desc: 'Быстрые ответы от команды поддержки' },
+              ].map(feature => (
+                <div key={feature.title} className="bg-[var(--bg-secondary)] rounded-xl p-4 flex gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[var(--accent)]/10 flex items-center justify-center flex-shrink-0">
+                    <Icon name={feature.icon as any} size={20} className="text-[var(--accent)]" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">{feature.title}</h4>
+                    <p className="text-sm text-[var(--text-tertiary)]">{feature.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-3">
+              <div className="bg-[var(--bg-secondary)] rounded-2xl p-5 border-2 border-[var(--accent)]">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="font-bold text-lg">Годовая подписка</h3>
+                    <p className="text-sm text-[var(--text-tertiary)]">Экономия 33%</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-[var(--accent)]">1200 ₽</p>
+                    <p className="text-sm text-[var(--text-tertiary)]">100 ₽/мес</p>
+                  </div>
+                </div>
+                <Badge className="bg-[var(--accent)]/10 text-[var(--accent)] border-0">
+                  Лучшее предложение
+                </Badge>
+              </div>
+
+              <div className="bg-[var(--bg-secondary)] rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="font-bold text-lg">Месячная подписка</h3>
+                    <p className="text-sm text-[var(--text-tertiary)]">Оплата ежемесячно</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold">150 ₽</p>
+                    <p className="text-sm text-[var(--text-tertiary)]">в месяц</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => {
+                setIsPremium(true);
+                alert('Премиум активирован! Добро пожаловать в Pluck Premium 🎉');
+                navigateTo('/profile');
+              }}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 py-6 text-lg"
+            >
+              Оформить Premium
+            </Button>
+
+            <p className="text-center text-xs text-[var(--text-tertiary)]">
+              Отменить подписку можно в любое время. Первые 7 дней бесплатно.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Achievements Screen */}
+      {screen === 'achievements' && (
+        <div className="fade-in pb-20">
+          <div className="sticky top-0 z-10 bg-[var(--bg-primary)] border-b border-[var(--divider)] px-4 py-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigateTo('/profile')}
+              >
+                <Icon name="ArrowLeft" size={20} />
+              </Button>
+              <h1 className="text-2xl font-bold">Достижения</h1>
+            </div>
+          </div>
+
+          <div className="px-4 py-6">
+            <div className="bg-[var(--bg-secondary)] rounded-xl p-6 mb-6 text-center">
+              <div className="text-4xl font-bold text-[var(--accent)] mb-2">
+                {userAchievements.length} / 12
+              </div>
+              <p className="text-[var(--text-tertiary)]">Получено достижений</p>
+              <Progress value={(userAchievements.length / 12) * 100} className="mt-4" />
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg">Разблокированные</h3>
+              {[
+                { id: 'first-steps', icon: 'Footprints', title: 'Первые шаги', desc: 'Прочитайте первую статью', color: 'from-blue-500 to-cyan-500' },
+                { id: 'week-streak', icon: 'Flame', title: 'Неделя подряд', desc: 'Читайте 7 дней без пропусков', color: 'from-orange-500 to-red-500' },
+              ].map(achievement => (
+                <div key={achievement.id} className="bg-[var(--bg-secondary)] rounded-xl p-4 flex gap-4 items-center">
+                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${achievement.color} flex items-center justify-center flex-shrink-0`}>
+                    <Icon name={achievement.icon as any} size={28} className="text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold mb-1">{achievement.title}</h4>
+                    <p className="text-sm text-[var(--text-tertiary)]">{achievement.desc}</p>
+                  </div>
+                  <Icon name="Check" size={24} className="text-green-500" />
+                </div>
+              ))}
+
+              <h3 className="font-semibold text-lg pt-4">Заблокированные</h3>
+              {[
+                { icon: 'BookOpen', title: 'Книжный червь', desc: 'Прочитайте 50 статей', color: 'from-purple-500 to-pink-500' },
+                { icon: 'Target', title: 'Целеустремленный', desc: 'Достигните цели 30 дней подряд', color: 'from-green-500 to-emerald-500' },
+                { icon: 'Zap', title: 'Скорочитатель', desc: 'Прочитайте 10 статей за день', color: 'from-yellow-500 to-orange-500' },
+                { icon: 'Award', title: 'Знаток', desc: 'Прочитайте 100 статей', color: 'from-indigo-500 to-purple-500' },
+                { icon: 'Crown', title: 'Мастер', desc: 'Прочитайте 500 статей', color: 'from-amber-500 to-yellow-500' },
+                { icon: 'Trophy', title: 'Легенда', desc: 'Прочитайте 1000 статей', color: 'from-pink-500 to-rose-500' },
+                { icon: 'Star', title: 'Вечерний читатель', desc: 'Читайте после 22:00 пять дней подряд', color: 'from-blue-500 to-indigo-500' },
+                { icon: 'Coffee', title: 'Утренняя рутина', desc: 'Читайте до 9:00 неделю подряд', color: 'from-amber-600 to-orange-600' },
+                { icon: 'Sparkles', title: 'Разносторонний', desc: 'Прочитайте статьи из 10 разных источников', color: 'from-teal-500 to-cyan-500' },
+                { icon: 'Heart', title: 'Любитель', desc: 'Добавьте 50 статей в избранное', color: 'from-red-500 to-pink-500' },
+              ].map((achievement, idx) => (
+                <div key={idx} className="bg-[var(--bg-secondary)] rounded-xl p-4 flex gap-4 items-center opacity-60">
+                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${achievement.color} opacity-50 flex items-center justify-center flex-shrink-0`}>
+                    <Icon name={achievement.icon as any} size={28} className="text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold mb-1">{achievement.title}</h4>
+                    <p className="text-sm text-[var(--text-tertiary)]">{achievement.desc}</p>
+                  </div>
+                  <Icon name="Lock" size={24} className="text-[var(--text-tertiary)]" />
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -1740,7 +2060,7 @@ const Index = () => {
       </Dialog>
 
       {/* Bottom Navigation */}
-      {screen !== 'auth' && screen !== 'goals' && screen !== 'settings' && screen !== 'help' && screen !== 'library-reader' && screen !== 'sources' && screen !== 'security' && screen !== 'verify-contact' && screen !== 'library-add-choice' && screen !== 'library-add-book' && screen !== 'library-add-article' && (
+      {screen !== 'auth' && screen !== 'goals' && screen !== 'settings' && screen !== 'help' && screen !== 'library-reader' && screen !== 'sources' && screen !== 'security' && screen !== 'verify-contact' && screen !== 'library-add-choice' && screen !== 'library-add-book' && screen !== 'library-add-article' && screen !== 'premium' && screen !== 'achievements' && (
         <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-secondary)] border-t border-[var(--divider)] px-6 py-3 z-20">
           <div className="flex justify-around items-center">
             {[
