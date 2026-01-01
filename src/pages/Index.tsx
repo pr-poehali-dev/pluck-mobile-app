@@ -255,6 +255,59 @@ const Index = () => {
 
   const categories = ['Для вас', 'Технологии', 'Наука', 'Сохранённое'];
 
+  if (screen === 'forgot-password') {
+    return (
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-6 fade-in">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigateTo('/login')}
+            className="mb-4"
+          >
+            <Icon name="ArrowLeft" size={24} />
+          </Button>
+
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-2">Восстановление пароля</h1>
+            <p className="text-[var(--text-secondary)]">
+              Введите email для получения ссылки
+            </p>
+          </div>
+
+          <div className="bg-[var(--bg-secondary)] rounded-2xl p-6 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-email">Email</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                placeholder="your@email.com"
+                className="bg-[var(--bg-tertiary)] border-0"
+              />
+            </div>
+
+            <Button
+              onClick={() => {
+                alert('Ссылка для восстановления отправлена на email');
+                navigateTo('/login');
+              }}
+              className="w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90"
+            >
+              Отправить ссылку
+            </Button>
+
+            <button 
+              onClick={() => navigateTo('/login')}
+              className="w-full text-center text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+            >
+              Вернуться к входу
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center p-4">
@@ -345,59 +398,6 @@ const Index = () => {
                 </button>
               )}
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (screen === 'forgot-password') {
-    return (
-      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-6 fade-in">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigateTo('/login')}
-            className="mb-4"
-          >
-            <Icon name="ArrowLeft" size={24} />
-          </Button>
-
-          <div className="text-center">
-            <h1 className="text-3xl font-bold mb-2">Восстановление пароля</h1>
-            <p className="text-[var(--text-secondary)]">
-              Введите email для получения ссылки
-            </p>
-          </div>
-
-          <div className="bg-[var(--bg-secondary)] rounded-2xl p-6 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reset-email">Email</Label>
-              <Input
-                id="reset-email"
-                type="email"
-                placeholder="your@email.com"
-                className="bg-[var(--bg-tertiary)] border-0"
-              />
-            </div>
-
-            <Button
-              onClick={() => {
-                alert('Ссылка для восстановления отправлена на email');
-                navigateTo('/login');
-              }}
-              className="w-full bg-[var(--accent)] hover:bg-[var(--accent)]/90"
-            >
-              Отправить ссылку
-            </Button>
-
-            <button 
-              onClick={() => navigateTo('/login')}
-              className="w-full text-center text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-            >
-              Вернуться к входу
-            </button>
           </div>
         </div>
       </div>
